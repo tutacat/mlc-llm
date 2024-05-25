@@ -41,17 +41,17 @@ class LogProbs(BaseModel):
     content: List[LogProbsContent]
 
 
-class UsageInfo(BaseModel):
-    prompt_tokens: int = 0
-    completion_tokens: int = 0
-    total_tokens: int = 0
+class CompletionUsage(BaseModel):
+    completion_tokens: int
+    prompt_tokens: int
+    total_tokens: int
+    extra: Optional[Dict[str, Any]] = None
+    """Extra metrics and info that may be returned by debug_config
+    """
 
-    def __init__(self, prompt_tokens: int = 0, completion_tokens: int = 0):
-        super().__init__(
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=prompt_tokens + completion_tokens,
-        )
+
+class StreamOptions(BaseModel):
+    include_usage: Optional[bool]
 
 
 ################ v1/models ################
@@ -99,6 +99,7 @@ class CompletionRequest(BaseModel):
     seed: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
     stream: bool = False
+    stream_options: Optional[StreamOptions] = None
     suffix: Optional[str] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -157,9 +158,7 @@ class CompletionResponse(BaseModel):
     created: int = Field(default_factory=lambda: int(time.time()))
     model: Optional[str] = None
     object: str = "text_completion"
-    usage: UsageInfo = Field(
-        default_factory=lambda: UsageInfo()  # pylint: disable=unnecessary-lambda
-    )
+    usage: Optional[CompletionUsage] = None
 
 
 ################ v1/chat/completions ################
@@ -212,6 +211,7 @@ class ChatCompletionRequest(BaseModel):
     seed: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
     stream: bool = False
+    stream_options: Optional[StreamOptions] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     tools: Optional[List[ChatTool]] = None
@@ -347,9 +347,7 @@ class ChatCompletionResponse(BaseModel):
     model: Optional[str] = None
     system_fingerprint: str
     object: Literal["chat.completion"] = "chat.completion"
-    usage: UsageInfo = Field(
-        default_factory=lambda: UsageInfo()  # pylint: disable=unnecessary-lambda
-    )
+    usage: Optional[CompletionUsage] = None
 
 
 class ChatCompletionStreamResponse(BaseModel):
@@ -363,9 +361,7 @@ class ChatCompletionStreamResponse(BaseModel):
     model: Optional[str] = None
     system_fingerprint: str
     object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
-    usage: UsageInfo = Field(
-        default_factory=lambda: UsageInfo()  # pylint: disable=unnecessary-lambda
-    )
+    usage: Optional[CompletionUsage] = None
 
 
 ################################################

@@ -30,11 +30,17 @@ struct ResponseFormat {
   Optional<String> schema = NullOpt;
 };
 
+enum class SpecialRequestKind : int {
+  kNone = 0,
+  kQueryEngineMetrics = 1,
+};
+
 /*! \brief The debug configuration of a request. */
 class DebugConfig {
  public:
   bool ignore_eos = false;
   bool pinned_system_prompt = false;
+  SpecialRequestKind special_request = SpecialRequestKind::kNone;
 };
 
 /*! \brief The generation configuration of a request. */

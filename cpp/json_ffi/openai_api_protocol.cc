@@ -485,15 +485,20 @@ picojson::object ChatCompletionResponse::AsJSON() const {
 picojson::object ChatCompletionStreamResponse::AsJSON() const {
   picojson::object obj;
   obj["id"] = picojson::value(this->id);
+
   picojson::array choices_arr;
   for (const auto& choice : this->choices) {
     choices_arr.push_back(picojson::value(choice.AsJSON()));
   }
   obj["choices"] = picojson::value(choices_arr);
+
   obj["created"] = picojson::value((int64_t)this->created);
   obj["model"] = picojson::value(this->model);
   obj["system_fingerprint"] = picojson::value(this->system_fingerprint);
   obj["object"] = picojson::value(this->object);
+  if (usage.has_value()) {
+    obj["usage"] = usage.value();
+  }
   return obj;
 }
 

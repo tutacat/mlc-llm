@@ -190,11 +190,35 @@ class JSONFFIEngineImpl : public JSONFFIEngine, public ModuleNode {
 
   String GetResponseFromStreamOutput(Array<RequestStreamOutput> delta_outputs) {
     std::unordered_map<std::string, std::vector<ChatCompletionStreamResponseChoice>> response_map;
+    std::vector<picojson::value> request_final_usage_messages;
+    std::string model = "json_ffi";
+
     for (const auto& delta_output : delta_outputs) {
       std::string request_id = delta_output->request_id;
       if (response_map.find(request_id) == response_map.end()) {
         response_map[request_id] = std::vector<ChatCompletionStreamResponseChoice>();
       }
+
+      // build the final usage messages
+      // invariant, we can always let other messages to come first
+      // then the final usage messages, as final usage is always last
+      if (delta_output->request_final_usage_json_str.defined()) {
+        ChatCompletionStreamResponse response;
+        response.id = request_id;
+        response.model = model;
+        response.system_fingerprint = "";
+        std::string usage_json_str = delta_output->request_final_usage_json_str.value();
+        picojson::value usage_json;
+        std::string err = picojson::parse(usage_json, usage_json_str);
+        if (!err.empty()) {
+          err_ = err;
+        } else {
+          response.usage = usage_json;
+        }
+        request_final_usage_messages.push_back(picojson::value(response.AsJSON()));
+        continue;
+      }
+      ICHECK_NE(delta_output->group_finish_reason.size(), 0);
       ChatCompletionStreamResponseChoice choice;
 
       if (delta_output->group_finish_reason.size() != 1) {
@@ -238,6 +262,9 @@ class JSONFFIEngineImpl : public JSONFFIEngine, public ModuleNode {
       response.model = "json_ffi";  // TODO: Return model name from engine (or from args)
       response.system_fingerprint = "";
       response_arr.push_back(picojson::value(response.AsJSON()));
+    }
+    for (auto&& item : request_final_usage_messages) {
+      response_arr.emplace_back(std::move(item));
     }
     return picojson::value(response_arr).serialize();
   }

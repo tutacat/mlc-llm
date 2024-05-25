@@ -141,9 +141,11 @@ struct RequestMetrics {
   picojson::value AsJSON() const;
   /*!
    * \brief Return OpenAI compatible usage metrics
+   * \param include_extra Whether to include extra set of metrics
+   *
    * \return The usage metrics in json.
    */
-  picojson::value GetUsage() const;
+  std::string GetUsageJSONStr(bool include_extra) const;
 };
 
 /*! \brief Runtime metrics of engine. */

@@ -86,6 +86,17 @@ picojson::value RequestMetrics::AsJSON() const {
   return picojson::value(metrics);
 }
 
+std::string RequestMetrics::GetUsageJSONStr(bool include_extra) const {
+  picojson::object usage;
+  usage["completion_tokens"] = picojson::value(num_output_tokens);
+  usage["prompt_tokens"] = picojson::value(num_input_tokens);
+  usage["total_tokens"] = picojson::value(num_input_tokens + num_output_tokens);
+  if (include_extra) {
+    usage["extra"] = this->AsJSON();
+  }
+  return picojson::value(usage).serialize();
+}
+
 picojson::value EngineMetrics::AsJSON() const {
   picojson::object metrics;
   metrics["engine_prefill_time_sum"] = picojson::value(engine_prefill_time_sum);

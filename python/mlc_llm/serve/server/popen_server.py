@@ -27,10 +27,11 @@ class PopenServer:  # pylint: disable=too-many-instance-attributes
         model_lib: Optional[str] = None,
         mode: Literal["local", "interactive", "server"] = "local",
         engine_config: Optional[EngineConfig] = None,
+        enable_debug: bool = True,
         enable_tracing: bool = False,
         enable_debug: bool = False,
         host: str = "127.0.0.1",
-        port: int = 8000,
+        port: int = 8081,
     ) -> None:
         """Please check out `python/mlc_llm/cli/serve.py` for the server arguments."""
         # - Check the fields fields of `engine_config`.
@@ -42,12 +43,16 @@ class PopenServer:  # pylint: disable=too-many-instance-attributes
         self.model_lib = model_lib
         self.device = device
         self.mode = mode
+        self.enable_debug = enable_debug
         self.engine_config = engine_config
         self.enable_tracing = enable_tracing
         self.enable_debug = enable_debug
         self.host = host
         self.port = port
         self._proc: Optional[subprocess.Popen] = None
+
+        self.base_url = None
+        self.openai_v1_base_url = None
 
     def start(self) -> None:  # pylint: disable=too-many-branches,too-many-statements
         """Launch the server in a popen subprocess.
@@ -58,8 +63,13 @@ class PopenServer:  # pylint: disable=too-many-instance-attributes
         if self.model_lib is not None:
             cmd += ["--model-lib", self.model_lib]
         cmd += ["--device", self.device]
+
+        if self.enable_debug:
+            cmd += ["--enable-debug"]
+
         if self.mode is not None:
             cmd += ["--mode", self.mode]
+
         if len(self.engine_config.additional_models) > 0:
             args_additional_model = []
             for additional_model in self.engine_config.additional_models:
@@ -112,7 +122,10 @@ class PopenServer:  # pylint: disable=too-many-instance-attributes
         # and hang forever.
 
         # Try to query the server until it is ready.
-        openai_v1_models_url = f"http://{self.host}:{str(self.port)}/v1/models"
+        self.base_url = f"http://{self.host}:{str(self.port)}"
+        self.openai_v1_base_url = f"http://{self.host}:{str(self.port)}/v1"
+        openai_v1_models_url = f"{self.base_url}/v1/models"
+
         query_result = None
         timeout = 120
         attempts = 0.0
