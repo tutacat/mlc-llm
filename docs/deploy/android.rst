@@ -10,7 +10,7 @@ Android SDK
 Demo App
 --------
 
-The demo APK below is built for Samsung S23 with Snapdragon 8 Gen 2 chip.
+The demo APK below is built to include Samsung S23 with Snapdragon 8 Gen 2 chip.
 
 .. image:: https://seeklogo.com/images/D/download-android-apk-badge-logo-D074C6882B-seeklogo.com.png
   :width: 135
